@@ -10,11 +10,12 @@ export const authOptions: NextAuthOptions = {
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "text", placeholder: "admin@example.com" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        role: { label: "Role", type: "text" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Missing email or password");
+        if (!credentials?.email || !credentials?.password || !credentials?.role) {
+          throw new Error("Missing email, password, or role");
         }
 
         const user = await prisma.user.findUnique({
@@ -22,27 +23,29 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
-          // Auto-create user for hackathon testing
+          // Auto-create user for hackathon testing with the requested role
           const hashedPassword = await bcrypt.hash(credentials.password, 10);
-          let roleStr = "BUYER";
-          if (credentials.email === "admin@example.com") roleStr = "ADMIN";
-          if (credentials.email === "seller@example.com") roleStr = "SELLER";
+          const requestedRole = credentials.role as Role;
           
-          let name = "Test Buyer";
-          if (roleStr === "ADMIN") name = "System Admin";
-          if (roleStr === "SELLER") name = "Test Seller";
-
-          const role = roleStr as Role;
+          let name = "Test User";
+          if (requestedRole === "ADMIN") name = "System Admin";
+          if (requestedRole === "SELLER") name = "Test Seller";
+          if (requestedRole === "BUYER") name = "Test Buyer";
 
           const newUser = await prisma.user.create({
             data: {
               email: credentials.email,
               name,
               password: hashedPassword,
-              role
+              role: requestedRole
             }
           });
           return { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role };
+        }
+
+        // If user exists, check if they selected the correct role
+        if (user.role !== credentials.role) {
+          throw new Error(`Account exists but is registered as a ${user.role}, not ${credentials.role}`);
         }
 
         const isValidPassword = await bcrypt.compare(credentials.password, user.password);

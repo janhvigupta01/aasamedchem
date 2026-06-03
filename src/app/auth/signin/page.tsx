@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("BUYER");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function SignIn() {
     const res = await signIn("credentials", {
       email,
       password,
+      role,
       redirect: false,
     });
 
@@ -35,15 +37,13 @@ export default function SignIn() {
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
       <div className="glass-panel" style={{ width: '100%', maxWidth: '400px' }}>
         <h2 className="title" style={{ fontSize: '1.5rem', textAlign: 'center' }}>Sign In</h2>
-        <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-          Admin: admin@example.com
-        </p>
-        <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-          Seller: seller@example.com
-        </p>
-        <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '0.875rem' }}>
-          Any other email creates a Buyer. (Use any password)
-        </p>
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '0.875rem', lineHeight: '1.6' }}>
+          <p>If you have an account, select your role and login.</p>
+          <p>If you don't have an account, the system will create one with the role you select!</p>
+          <p style={{ marginTop: '0.5rem', opacity: 0.8 }}>
+            <em>(Test Admin: admin@example.com / admin123)</em>
+          </p>
+        </div>
 
         {error && (
           <div style={{ color: 'var(--error)', background: 'rgba(239, 68, 68, 0.1)', padding: '10px', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem' }}>
@@ -52,6 +52,19 @@ export default function SignIn() {
         )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label className="label">I am a...</label>
+            <select 
+              className="input" 
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              required
+            >
+              <option value="ADMIN">System Admin</option>
+              <option value="SELLER">Seller</option>
+              <option value="BUYER">Buyer</option>
+            </select>
+          </div>
           <div>
             <label className="label">Email Address</label>
             <input 

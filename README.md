@@ -36,13 +36,16 @@ The database is modelled to ensure precision and accuracy in pricing calculation
 ### Unit Storage and Conversion Strategy
 
 To prevent floating-point inaccuracies and maintain consistency:
-1. **Database Storage:** All prices and quantities are stored as `Decimal` in Prisma, which maps to high-precision `NUMERIC` types in PostgreSQL.
-2. **Base Units:** The system stores the foundational `basePrice` and `stockQty` anchored to the smallest measurable unit: `G` (grams) for weight, `ML` (milliliters) for volume, and `COUNT` for discrete items.
-3. **The Conversion Flow:**
-   - When a Buyer selects `2 kg` of a product in the UI, the frontend calls the utility `convertToBaseUnit(2, "kg", "G")`.
-   - The utility scales the quantity using fixed multipliers (1 kg = 1000 g, so `2 * 1000 = 2000 g`).
-   - The price is computed: `2000 * basePrice`.
-   - The order is saved with `requestedQty = 2` and `requestedUnit = "kg"` so that Admins can see exactly what the user inputted, alongside the final `calculatedPrice`.
+1. **Database Storage:** All prices and quantities are stored as `Decimal` in Prisma, which maps to high-precision `NUMERIC` types in PostgreSQL. This natively handles high decimal precision and massive values effortlessly.
+2. **Base Units:** The system stores the foundational `basePrice` and `stockQty` anchored to the smallest measurable unit: `G` (grams) for weight, `ML` (milliliters) for volume, and `COUNT` for items (unit/count).
+3. **Conversion Factors:**
+   - Weight: `1 kg = 1000 g`
+   - Volume: `1 L = 1000 mL`
+4. **Where and How Conversions are Applied:**
+   - **Before Saving/Calculations:** When a Buyer selects a larger unit (e.g., `2 kg`) in the UI, the frontend calls the utility `convertToBaseUnit(2, "kg", "G")` right before saving.
+   - The utility scales the quantity using the conversion factors (`2 * 1000 = 2000 g`).
+   - The final price is computed by multiplying this base quantity by the base rate (`2000 * basePrice`).
+   - The order is stored with the exact user inputs (`requestedQty = 2`, `requestedUnit = "kg"`) alongside the `calculatedPrice` in INR, ensuring the Admin sees exactly what the user ordered.
 
 ## Setup & Local Development
 
@@ -84,13 +87,14 @@ To prevent floating-point inaccuracies and maintain consistency:
 ## Testing the Application
 
 - **Login Credentials:**
-  Navigate to the sign-in page. To act as an Admin, log in with:
-  - **Email:** `admin@example.com`
-  - **Password:** *(Type any password. The system will automatically create the admin account on the first attempt for testing purposes).*
+  Navigate to the sign-in page. You can select your role from the dropdown. 
+  For existing test accounts, use:
+  - **Admin:** `admin@example.com` / `admin123`
+  - **Seller:** `seller@example.com` / `seller123`
 
 - **Creating Products (Admin):**
   Once logged in as Admin, create a product (e.g., "Chemical X", Base Unit: `G`, Base Price: `0.05` INR, Stock: `1000000`).
 
 - **Ordering (Buyer):**
-  Log out, then create a new user (or log in with a different email/password combo, though the current UI forces the first login to be Admin, and subsequent arbitrary logins to act as Buyers if you just insert them manually or adjust the code).
-  As a buyer, select Chemical X, choose `kg` as the unit, enter `5` as quantity, and verify the total calculates correctly to 250 INR!
+  Log out, then log in as a Seller or Buyer. 
+  Select a product, choose your desired unit (g, kg, L, mL, or count), enter the quantity, and verify the total is correctly calculated and displayed in exact INR!

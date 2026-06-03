@@ -18,7 +18,10 @@ export default function DashboardClient({ products }: { products: Product[] }) {
   const [quantity, setQuantity] = useState<string>("1");
   const [unit, setUnit] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
+
+  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const selectedProduct = products.find(p => p.id === selectedProductId);
   const availableUnits = selectedProduct ? DISPLAY_UNITS[selectedProduct.baseUnit] : [];
@@ -66,7 +69,17 @@ export default function DashboardClient({ products }: { products: Product[] }) {
     <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "2rem" }}>
       {/* Product Catalog */}
       <div className="glass-panel" style={{ overflowX: "auto" }}>
-        <h2 style={{ marginBottom: "1.5rem" }}>Available Products</h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+          <h2 style={{ margin: 0 }}>Available Products</h2>
+          <input 
+            type="text" 
+            placeholder="Search products..." 
+            className="input"
+            style={{ width: "200px" }}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
         <table>
           <thead>
             <tr>
@@ -77,7 +90,7 @@ export default function DashboardClient({ products }: { products: Product[] }) {
             </tr>
           </thead>
           <tbody>
-            {products.map(p => (
+            {filteredProducts.map(p => (
               <tr key={p.id}>
                 <td style={{ fontWeight: 500 }}>{p.name}</td>
                 <td>{formatINR(parseFloat(p.basePrice))} / {p.baseUnit.toLowerCase()}</td>
@@ -93,6 +106,13 @@ export default function DashboardClient({ products }: { products: Product[] }) {
                 </td>
               </tr>
             ))}
+            {filteredProducts.length === 0 && (
+              <tr>
+                <td colSpan={4} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                  No products match your search.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
