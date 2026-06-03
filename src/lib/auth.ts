@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "./prisma";
 import bcrypt from "bcrypt";
+import { Role } from "@prisma/client";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -23,13 +24,15 @@ export const authOptions: NextAuthOptions = {
         if (!user) {
           // Auto-create user for hackathon testing
           const hashedPassword = await bcrypt.hash(credentials.password, 10);
-          let role = "BUYER";
-          if (credentials.email === "admin@example.com") role = "ADMIN";
-          if (credentials.email === "seller@example.com") role = "SELLER";
+          let roleStr = "BUYER";
+          if (credentials.email === "admin@example.com") roleStr = "ADMIN";
+          if (credentials.email === "seller@example.com") roleStr = "SELLER";
           
           let name = "Test Buyer";
-          if (role === "ADMIN") name = "System Admin";
-          if (role === "SELLER") name = "Test Seller";
+          if (roleStr === "ADMIN") name = "System Admin";
+          if (roleStr === "SELLER") name = "Test Seller";
+
+          const role = roleStr as Role;
 
           const newUser = await prisma.user.create({
             data: {
